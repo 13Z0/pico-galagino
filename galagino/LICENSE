@@ -1,0 +1,78 @@
+The files in this directory come from three sources.
+
+1. Galagino by Till Harbaum (https://github.com/harbaum/galagino, main at
+   commit cdd21cdf6e1b), published under the GNU General Public License v3.0
+   (galagino.ino: "Published under GPLv3"):
+
+     i8048.c, i8048.h            the Intel 8048 core of the Donkey Kong sound
+                                 CPU, derived by Galagino from asig/kosmos-cp1
+                                 (GPL-3.0); changed for this port: true/false,
+                                 the ROM pointer and a cycle counter, see the
+                                 note in i8048.h
+     tileaddr.h, dip_switches.h  unchanged
+     data/*_logo.h               the game menu logos, unchanged
+     data/galaga_starseed.h      the Galaga star sets, unchanged
+     data/galaga_sample_boom.h   the Galaga explosion sample, unchanged
+     data/dkong_sample_*.h       the Donkey Kong walk, jump and stomp samples,
+                                 unchanged
+
+   and, ported to C for this project from Galagino's pacman.h, galaga.h,
+   dkong.h, frogger.h, digdug.h, 1942.h, emulation.c, galagino.ino and the
+   romconv/*.py converters:
+
+     game_pacman.c, game_galaga.c, game_dkong.c, game_frogger.c,
+     game_digdug.c, game_1942.c, gal_gfx.c, gal_sound.c, gal_menu.c
+
+2. The MAME project (https://github.com/mamedev/mame), under the BSD-3-Clause
+   licence below, taken from pico-mooncresta (MAME master at commit
+   1ecdb5701405):
+
+     z80.c, z80.h                src/devices/cpu/z80/z80.cpp, z80.h, z80.inc
+                                 Juergen Buchmueller; one addition for this
+                                 port, z80_hold_irq() (MAME's HOLD_LINE)
+     z80.lst                     src/devices/cpu/z80/z80.lst, unchanged
+                                 Juergen Buchmueller, Andrei I. Holub
+     z80_ops.h                   generated from z80.lst by tools/z80gen.py,
+                                 which is derived from src/devices/cpu/z80/
+                                 z80make.py: Andre I. Holub
+
+   Timing and interrupt details of the games follow MAME's drivers
+   (src/mame/namco/galaga.cpp, src/mame/galaxian/galaxian.cpp).
+
+3. Original to pico-galagino, under the GNU General Public License v3.0 with
+   the rest of the project:
+
+     galagino.h, gal_internal.h, gal_core.c, gal_games.c, gal_flash.c,
+     gal_port.h, romload.c, romload.h (romload.c generalised from
+     pico-mooncresta)
+
+--------------------------------------------------------------------------------
+
+BSD-3-Clause licence of the MAME parts
+
+Copyright (c) the copyright holders named above
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

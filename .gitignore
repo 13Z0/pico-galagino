@@ -1,0 +1,73 @@
+# Build trees (bld.sh recreates build/ on every run)
+**/build*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+
+# Release outputs (buildAll.sh, bld.sh -b)
+releases/
+releases_bl/
+*.uf2
+*.elf
+*.elf.map
+*.dis
+*.bin
+*.hex
+
+# Game ROM data. Copyright Namco, Midway, Nintendo, Konami and Capcom - it must
+# never be committed, in any form. Sets are matched by CRC, so the file names
+# below only catch the usual names.
+/roms/
+*.zip
+*.6e
+*.6f
+*.6h
+*.6j
+*.5e
+*.5f
+*.7f
+*.4a
+*.1m
+*.3m
+gg1_*
+prom-*
+c_5?t_g.bin
+s_3?_b.bin
+v_5h_b.bin
+v_3pt.bin
+l_4?_b.bin
+*.bpr
+frogger.2[67]
+frogger.60[6-9]
+frogger.610
+frsm3.7
+pr-91.6l
+dd1*
+136007.*
+srb-*
+sr-*
+sb-*
+
+# CPU test programs for hosttest/zex_host (fetched separately)
+*.com
+
+# Host harness (hosttest/) binaries and outputs
+hosttest/gal_host
+hosttest/zex_host
+hosttest/conv_check
+hosttest/out*/
+hosttest/**/*.ppm
+hosttest/**/*.png
+hosttest/**/*.wav
+
+# Python
+__pycache__/
+*.pyc
+
+# Editors and OS cruft
+.vscode/
+.idea/
+*~
+*.swp
+.DS_Store
+*Zone.Identifier
