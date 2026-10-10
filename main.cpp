@@ -124,8 +124,8 @@ static uint64_t lastFrameUs = 0;
         [MOPT_FRAMESKIP] = 0,                                                           \
         [MOPT_DISPLAY_MODE] = HSTX && ENABLEDVI,                                        \
         [MOPT_EXTERNAL_AUDIO] = EXT_AUDIO_IS_ENABLED,                                   \
-        [MOPT_FONT_COLOR] = 1,                                                          \
-        [MOPT_FONT_BACK_COLOR] = 1,                                                     \
+        [MOPT_FONT_COLOR] = 0,                                                          \
+        [MOPT_FONT_BACK_COLOR] = 0,                                                     \
         [MOPT_FRUITJAM_VUMETER] = ENABLE_VU_METER,                                      \
         [MOPT_FRUITJAM_VOLUME_CONTROL] = (HW_CONFIG == 8),                              \
         [MOPT_DMG_PALETTE] = 0,            /* Game Boy */                               \
