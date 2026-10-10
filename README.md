@@ -13,6 +13,8 @@ It uses the same menu, display, audio and controller framework as this family of
 - Phoenix: [pico-phoenix](https://github.com/PicoPlus-devel/pico-phoenix)
 - Moon Cresta: [pico-mooncresta](https://github.com/PicoPlus-devel/pico-mooncresta)
 
+pico-galagino runs standalone, or as an application of [pico-bootLoader](https://github.com/PicoPlus-devel/pico-bootLoader) (v0.7 and later), where it appears in the **Arcade** category.
+
 **The ROM sets of the games are not included and must be supplied by the user.** They are copyright of their manufacturers and are not distributed with this project. See [Game data](#game-data).
 
 ***
@@ -165,7 +167,7 @@ Both pictures appear upright once the monitor is turned as described in the tabl
 
 ## Settings menu
 
-**SELECT + START** opens the settings menu. Besides *Tate mode*, it offers the screen mode with or without scanlines, the FPS overlay, audio on/off, rapid fire on A and on B, the external audio output, the menu colours, the Fruit Jam volume and VU meter, the controller test, BOOTSEL mode and USB drive mode. In a game it also offers *Reset game*, and *Quit game*, which returns to the game menu. When started from pico-bootLoader, it also offers *Return to emulator selection menu*.
+**SELECT + START** opens the settings menu. Besides *Tate mode*, it offers the screen mode with or without scanlines, the FPS overlay, audio on/off, rapid fire on A and on B, the external audio output, the Fruit Jam volume and VU meter, the controller test, BOOTSEL mode and USB drive mode. In a game it also offers *Reset game*, and *Quit game*, which returns to the game menu. When started from pico-bootLoader, it also offers *Return to emulator selection*.
 
 The settings are stored on the SD card in `/settings_ARC.dat`, a file shared by all arcade games of this family. The games have no save states, and high scores are not kept after a reset or power cycle.
 
@@ -187,6 +189,14 @@ cd pico-galagino
 Every configuration must be built with `-2` (RP2350). `EXTRA_CMAKE_ARGS=-DGALAGINO_FRAME_STATS=1 ./bld.sh -c 8 -2` builds a version that prints the time spent emulating and drawing a frame over the serial console every five seconds.
 
 The instruction loop of the Z80 core, `galagino/z80_ops.h`, is generated from MAME's opcode list `galagino/z80.lst` and is checked in, so the build does not need Python. After a change to the list, regenerate it with `tools/z80gen.py galagino/z80.lst galagino/z80_ops.h`. The built-in screensaver image (`DefaultSS444.c`, `DefaultSS555.c`) is a picture of the game menu, made by `tools/mkdefaultss.py` from a frame of the host harness.
+
+The pico-bootLoader menu tiles are built from the same pictures: `tools/capture_footage.sh` takes the game menu and a frame of Pac-Man, Galaga and Donkey Kong from your own ROM sets with the host harness, and `tools/mkartwork.py` lays them out in the bootloader's two themes. Afterwards, run the bootloader's `tools/png2raw.py` on the two tiles to rebuild their `.444`/`.555` caches.
+
+```sh
+hosttest/build.sh
+tools/capture_footage.sh ~/roms/arcade /tmp/gal_footage
+tools/mkartwork.py --footage /tmp/gal_footage --bootloader ../pico-bootLoader/emu/assets
+```
 
 ### Host test harness
 

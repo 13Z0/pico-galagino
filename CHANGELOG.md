@@ -24,6 +24,7 @@ Initial release.
 - **Quit game** in the settings menu returns to the game menu.
 - A and B both fire, each with its own rapid fire setting; in 1942, B is the loop.
 - Settings are shared with the other arcade games of this family, in `/settings_ARC.dat`.
+- Can be started from pico-bootLoader (v0.7 and later), where it appears in the Arcade category.
 
 <a name="downloads___"></a>
 ## Downloads by configuration
