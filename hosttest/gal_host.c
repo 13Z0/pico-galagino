@@ -92,7 +92,7 @@ static void host_close(void *ctx, void *f)
     fclose((FILE *)f);
 }
 
-static const gal_io_t io = {NULL, host_list_dir, host_open, host_size, host_read_at, host_close};
+static const gal_io_t io = {NULL, host_list_dir, host_open, host_size, host_read_at, host_close, NULL, NULL};
 
 /* --- a simulated flash for the store ---------------------------------------- */
 

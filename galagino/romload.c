@@ -13,7 +13,8 @@
  *
  * The file system is reached through gal_io_t, so the same code runs on FatFs
  * on the board and on stdio in the host harness. Large buffers come from the
- * heap, never the stack: the inflate state alone is about 11 KB.
+ * allocator of gal_io_t, never the stack: the inflate state alone is about
+ * 11 KB.
  */
 #include "romload.h"
 
@@ -52,6 +53,23 @@ static uint32_t all_files(const gal_game_info_t *g)
 static uint8_t *dest_of(const gal_game_info_t *g, uint8_t *const *regions, int idx)
 {
     return regions[g->files[idx].region] + g->files[idx].offset;
+}
+
+static void *tmp_alloc(const gal_io_t *io, uint32_t size)
+{
+    if (!size)
+        size = 1;
+    return io->alloc ? io->alloc(io->ctx, size) : malloc(size);
+}
+
+static void tmp_free(const gal_io_t *io, void *p)
+{
+    if (!p)
+        return;
+    if (io->free)
+        io->free(io->ctx, p);
+    else
+        free(p);
 }
 
 static uint32_t crc32_of(const uint8_t *p, size_t n)
@@ -106,7 +124,7 @@ static int zip_extract(const gal_io_t *io, void *fh, uint32_t lfh_ofs, int metho
         return 0;
     uint32_t data_ofs = lfh_ofs + 30 + le16(lfh + 26) + le16(lfh + 28);
 
-    uint8_t *comp = (uint8_t *)malloc(comp_size ? comp_size : 1);
+    uint8_t *comp = (uint8_t *)tmp_alloc(io, comp_size);
     if (!comp)
         return 0;
     int ok = 0;
@@ -119,18 +137,19 @@ static int zip_extract(const gal_io_t *io, void *fh, uint32_t lfh_ofs, int metho
         }
         else if (method == 8)
         {
-            tinfl_decompressor *d = tinfl_decompressor_alloc();
+            tinfl_decompressor *d = (tinfl_decompressor *)tmp_alloc(io, sizeof(tinfl_decompressor));
             if (d)
             {
+                tinfl_init(d);
                 size_t in_sz = comp_size, out_sz = size;
                 tinfl_status st =
                     tinfl_decompress(d, comp, &in_sz, dst, dst, &out_sz, TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF);
                 ok = (st == TINFL_STATUS_DONE && out_sz == size);
-                tinfl_decompressor_free(d);
+                tmp_free(io, d);
             }
         }
     }
-    free(comp);
+    tmp_free(io, comp);
     return ok && crc32_of(dst, size) == crc;
 }
 
@@ -143,10 +162,10 @@ static uint32_t load_zip(const gal_game_info_t *g, uint8_t *const *regions, cons
 
     uint32_t fsize = io->size(io->ctx, fh);
     uint32_t tail = fsize < ZIP_EOCD_SEARCH ? fsize : ZIP_EOCD_SEARCH;
-    uint8_t *buf = (uint8_t *)malloc(tail ? tail : 1);
+    uint8_t *buf = (uint8_t *)tmp_alloc(io, tail);
     if (!buf || tail < 22 || io->read_at(io->ctx, fh, fsize - tail, buf, tail) != (int)tail)
     {
-        free(buf);
+        tmp_free(io, buf);
         io->close(io->ctx, fh);
         return found;
     }
@@ -167,7 +186,7 @@ static uint32_t load_zip(const gal_game_info_t *g, uint8_t *const *regions, cons
         entries = le16(buf + eocd + 10);
         cd_ofs = le32(buf + eocd + 16);
     }
-    free(buf);
+    tmp_free(io, buf);
 
     const uint32_t all = all_files(g);
     uint32_t ofs = cd_ofs;
@@ -206,7 +225,7 @@ static uint32_t load_loose(const gal_game_info_t *g, uint8_t *const *regions, co
     void *fh = io->open(io->ctx, path);
     if (!fh)
         return found;
-    uint8_t *buf = (uint8_t *)malloc(size ? size : 1);
+    uint8_t *buf = (uint8_t *)tmp_alloc(io, size);
     if (buf && io->read_at(io->ctx, fh, 0, buf, size) == (int)size)
     {
         int idx = wanted(g, found, size, crc32_of(buf, size));
@@ -217,7 +236,7 @@ static uint32_t load_loose(const gal_game_info_t *g, uint8_t *const *regions, co
             found |= 1u << idx;
         }
     }
-    free(buf);
+    tmp_free(io, buf);
     io->close(io->ctx, fh);
     return found;
 }
@@ -279,12 +298,12 @@ static uint32_t scan_dir(const gal_game_info_t *g, uint8_t *const *regions, cons
     scan_t s;
     s.g = g;
     s.count = 0;
-    s.list = (candidate_t *)malloc(sizeof(candidate_t) * MAX_CANDIDATES);
+    s.list = (candidate_t *)tmp_alloc(io, sizeof(candidate_t) * MAX_CANDIDATES);
     if (!s.list)
         return found;
     if (!io->list_dir(io->ctx, dir, scan_cb, &s))
     {
-        free(s.list);
+        tmp_free(io, s.list);
         return found;
     }
 
@@ -309,7 +328,7 @@ static uint32_t scan_dir(const gal_game_info_t *g, uint8_t *const *regions, cons
         }
     }
 
-    free(s.list);
+    tmp_free(io, s.list);
     return found;
 }
 

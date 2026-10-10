@@ -75,7 +75,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "usage: %s <romroot> <dumpdir>\n", argv[0]);
         return 1;
     }
-    const gal_io_t io = {NULL, host_list_dir, host_open, host_size, host_read_at, host_close};
+    const gal_io_t io = {NULL, host_list_dir, host_open, host_size, host_read_at, host_close, NULL, NULL};
     gal_init(GAL_FMT_RGB565, 44100);
     gal_set_psram(malloc(GAL_PSRAM_SIZE), GAL_PSRAM_SIZE);
     mkdir(argv[2], 0755);

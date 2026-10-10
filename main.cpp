@@ -363,7 +363,24 @@ static void ffClose(void *ctx, void *file)
     Frens::f_free(file);
 }
 
-static const gal_io_t romIo = {nullptr, ffListDir, ffOpen, ffSize, ffReadAt, ffClose};
+// The loader's scratch buffers go where f_malloc puts them: PSRAM on the boards
+// that have it. There, SRAM is not claimed at boot (see claimHeap() in
+// pico_shared) and the display and audio buffers leave little of the heap, so a
+// 16 KB loose 1942 file, or a zip entry plus the inflate state, made malloc
+// panic. Without PSRAM f_malloc is malloc over the whole claimed heap.
+static void *ffAlloc(void *ctx, uint32_t size)
+{
+    (void)ctx;
+    return Frens::f_malloc(size);
+}
+
+static void ffFree(void *ctx, void *p)
+{
+    (void)ctx;
+    Frens::f_free(p);
+}
+
+static const gal_io_t romIo = {nullptr, ffListDir, ffOpen, ffSize, ffReadAt, ffClose, ffAlloc, ffFree};
 
 // ---------------------------------------------------------------------------
 // The flash store (boards without PSRAM).
