@@ -13,6 +13,12 @@ Six arcade games for RP2350 boards with DVI/HDMI output: Pac-Man, Galaga, Donkey
 
 # Changelog
 
+## v0.1.2
+
+- Fixed: 1942 did not always keep up with 60 frames per second, which made its sound stutter. It now runs at full speed with time to spare.
+- Fixed: on boards such as the Adafruit Fruit Jam, the sound of all games dropped out briefly every few seconds, over HDMI as well as on the headphone output.
+- Improved: on boards with HSTX video output, such as the Adafruit Fruit Jam, the upright picture (*Tate mode* off) now shows every line of the game instead of leaving some out.
+
 ## v0.1.1
 
 - Fixed: on boards with PSRAM, such as the Adafruit Fruit Jam, start-up stopped with an "Out of memory" error when the 1942 ROM set was on the SD card as unzipped files, the way updateAll installs it.
