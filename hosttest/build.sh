@@ -3,12 +3,23 @@
 #   hosttest/gal_host    - the Galagino core (games, menu, video, sound, ROM loader)
 #   hosttest/conv_check  - dumps the converted ROM data for hosttest/conv_check.py
 #   hosttest/zex_host    - the Z80 core on the ZEXDOC/ZEXALL instruction tests
+#   hosttest/flash_test  - the flash cache on its own, with fake games
 #
 # The core in galagino/ has no Pico dependencies; this compiles it for Linux
 # with ASan. Drop -fsanitize=address (and use -O2) for timing measurements:
 #   OPT="-O2" hosttest/build.sh
+# With SDL2 installed (libsdl2-dev), gal_host also gets live mode (--live,
+# hosttest/host_sdl.c): a window, sound and the keyboard.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+SDL=()
+if pkg-config --exists sdl2 2>/dev/null; then
+  SDL=(-DHOST_SDL=1 hosttest/host_sdl.c $(pkg-config --cflags --libs sdl2))
+  echo "SDL2 $(pkg-config --modversion sdl2) found: gal_host with live mode (--live)"
+else
+  echo "SDL2 not found: gal_host without live mode (install libsdl2-dev for --live)"
+fi
 
 OPT=${OPT:--O1 -g -fsanitize=address -fno-omit-frame-pointer}
 CFLAGS=(
@@ -32,13 +43,43 @@ CORE=(
   galagino/game_dkong.c
   galagino/game_digdug.c
   galagino/game_1942.c
+  galagino/game_galaxian.c
+  galagino/game_universal.c
+  galagino/game_phoenix.c
+  galagino/game_invaders.c
+  galagino/game_bombjack.c
+  galagino/game_pbaction.c
+  galagino/game_starforce.c
+  galagino/game_btime.c
+  galagino/game_snk6502.c
+  galagino/game_timeplt.c
+  galagino/konami_snd.c
+  galagino/m6809.c
+  galagino/game_tutankhm.c
+  galagino/game_circusc.c
+  galagino/game_mappy.c
+  galagino/gal_namcoio.c
+  galagino/game_gaplus.c
+  galagino/game_gyruss.c
+  galagino/game_xevious.c
+  galagino/m6502.c
+  galagino/i8085.c
+  galagino/phoenix.c
+  galagino/phoenix_sound.c
+  galagino/tms36xx.c
+  galagino/mooncresta_sound.c
   galagino/gal_flash.c
+  galagino/gal_hiscore.c
   galagino/i8048.c
   galagino/romload.c
   third_party/miniz/miniz.c
 )
 
-gcc "${CFLAGS[@]}" -I pico_shared/drivers/pico_hdmi hosttest/gal_host.c "${CORE[@]}" -lm -o hosttest/gal_host
+gcc "${CFLAGS[@]}" -I pico_shared/drivers/pico_hdmi hosttest/gal_host.c "${CORE[@]}" "${SDL[@]}" -lm -o hosttest/gal_host
 gcc "${CFLAGS[@]}" -DGAL_CONV_CHECK hosttest/conv_check.c "${CORE[@]}" -lm -o hosttest/conv_check
 gcc "${CFLAGS[@]}" -I hosttest hosttest/zex_host.c galagino/z80.c -o hosttest/zex_host
-echo "built hosttest/gal_host, hosttest/conv_check and hosttest/zex_host"
+# gal_flash.c reads the fake game table of the test
+gcc "${CFLAGS[@]}" -Dgal_games=fake_games -c galagino/gal_flash.c -o hosttest/flash_test_gal_flash.o
+gcc "${CFLAGS[@]}" hosttest/flash_test.c hosttest/flash_test_gal_flash.o third_party/miniz/miniz.c -o hosttest/flash_test
+rm -f hosttest/flash_test_gal_flash.o
+echo "built hosttest/gal_host, conv_check, zex_host and flash_test"

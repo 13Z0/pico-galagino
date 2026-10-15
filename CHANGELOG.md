@@ -1,6 +1,6 @@
 # pico-galagino
 
-Six arcade games for RP2350 boards with DVI/HDMI output: Pac-Man, Galaga, Donkey Kong, Frogger, Dig Dug and 1942. A port of Galagino by Till Harbaum.
+Arcade games for RP2350 boards with DVI/HDMI output: Pac-Man, Galaga, Donkey Kong, Frogger, Dig Dug, 1942 and more from GalaginoPlus. A port of Galagino by Till Harbaum.
 
 # General Info
 
@@ -13,11 +13,24 @@ Six arcade games for RP2350 boards with DVI/HDMI output: Pac-Man, Galaga, Donkey
 
 # Changelog
 
+## v0.2
+
+- 41 more games, from GalaginoPlus: **Ms. Pac-Man**, **Pengo**, **Crush Roller**, **Eyes**, **Mr. TNT**, **Lizard Wizard**, **The Glob**, **Ali Baba and 40 Thieves**, **Van-Van Car**, **Donkey Kong Jr.**, **Donkey Kong 3**, **BurgerTime**, **Bump 'n' Jump**, **Vanguard**, **Fantasy**, **Nibbler**, **Galaxian**, **Moon Cresta**, **Scramble**, **Super Cobra**, **Turtles**, **Amidar**, **Anteater**, **Bagman**, **Lady Bug**, **Mr. Do!**, **Space Invaders**, **Phoenix**, **Bomb Jack**, **Pinball Action**, **Star Force**, **Time Pilot**, **Pooyan**, **Tutankham**, **Roc'n Rope**, **Circus Charlie**, **Mappy**, **The Tower of Druaga**, **Gaplus**, **Gyruss** and **Xevious**. The readme lists their ROM sets and folders.
+- High scores are saved on the SD card, in `/SAVES/GALAGINO`, and are back the next time a game is played (from GalaginoPlus).
+- On boards without PSRAM, the large games (1942, Bomb Jack, Pinball Action, Star Force, Donkey Kong 3, BurgerTime, Bump 'n' Jump, Tutankham, Roc'n Rope, Circus Charlie, The Tower of Druaga, Gaplus, Gyruss, Xevious) are copied into flash the first time they are started instead of at every start-up with new ROM sets: the board shows a notice, restarts once and starts the game, which takes a few seconds. The other games are read from the SD card when they start.
+- In the game menu, left and right move three games at a time.
+- After quitting a game, the game menu shows the game just played instead of going back to Galaga.
+- Attract mode: when the game menu chooses a game at random, it now runs on like a reel to that game and blinks its logo before starting it. After three minutes the menu chooses the next game, so a board left alone shows one game after another. Every game is shown once, in random order, before any game comes back. Any button stops this.
+- Fixed: after quitting a game, the game menu no longer started a random game after 20 seconds without input.
+- Fixed: with *Tate mode* on, the game menu showed a diagonal tear while it scrolled.
+- pico-bootLoader's updateAll now installs the ROM sets of all these games. The board no longer creates the game folders.
+- The release now includes updateAll.exe, which installs the ROM sets on the SD card from a Windows computer: it takes them from a folder of MAME zips and downloads those that are missing. Scripts for Linux and macOS are available as well. The readme explains how to use it.
+
 ## v0.1.2
 
 - Fixed: 1942 did not always keep up with 60 frames per second, which made its sound stutter. It now runs at full speed with time to spare.
 - Fixed: on boards such as the Adafruit Fruit Jam, the sound of all games dropped out briefly every few seconds, over HDMI as well as on the headphone output.
-- Improved: on boards with HSTX video output, such as the Adafruit Fruit Jam, the upright picture (*Tate mode* off) now shows every line of the game instead of leaving some out.
+- Improved: on boards with HSTX video output, such as the Adafruit Fruit Jam, the upright picture (*Tate mode* off) now shows every line of the game instead of leaving some out. Boards with PicoDVI output still leave out some lines.
 
 ## v0.1.1
 
@@ -38,6 +51,8 @@ Initial release.
 
 <a name="downloads___"></a>
 ## Downloads by configuration
+
+The ROM set installer for Windows: [updateAll.exe](https://github.com/PicoPlus-devel/pico-galagino/releases/latest/download/updateAll.exe)
 
 Binaries for each configuration are listed below. Only RP2350-based boards are supported; no RP2040 / Pico 1 binaries are provided.
 
