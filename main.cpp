@@ -27,7 +27,11 @@
  */
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <climits>
+#include <malloc.h>
+#include <unistd.h>
 
 #include "pico/stdlib.h"
 #include "hardware/vreg.h"
@@ -1423,9 +1427,29 @@ static void processPerFrame()
     }
 }
 
+// The SRAM heap, claimed before initAll(). pico_shared's claimHeap() does this
+// only on boards without PSRAM. With PSRAM (Fruit Jam) the heap stays at the size
+// earlier allocations grew it to, and newlib sbrk's the whole of a new request,
+// rounded up to 4 KB pages: the 8 KB audio ring buffer then failed with 6 KB free
+// at the top of the heap ("Out of memory" at boot). Galagino keeps nothing in the
+// SRAM heap that pico_shared balances against PSRAM, so claiming it is safe here.
+extern "C" char __StackLimit; // end of the heap region (linker script)
+
+static void claimSramHeap()
+{
+    mallopt(M_TRIM_THRESHOLD, INT_MAX);
+    size_t room = (size_t)(&__StackLimit - (char *)sbrk(0)) & ~(size_t)4095;
+    if (room > 4096)
+    {
+        void *volatile block = malloc(room - 256);
+        free(block);
+    }
+}
+
 int main()
 {
     Frens::setClocksAndStartStdio(CPUFreqKHz, VREG_VOLTAGE_1_20);
+    claimSramHeap();
 
     printf("==========================================================================================\n");
     printf("picoGalagino %s\n", SWVERSION);
