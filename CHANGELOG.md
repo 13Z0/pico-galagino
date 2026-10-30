@@ -13,6 +13,12 @@ Arcade games for RP2350 boards with DVI/HDMI output: Pac-Man, Galaga, Donkey Kon
 
 # Changelog
 
+## v0.2.1
+
+- At start-up, a screen lists all the games while the board looks for their ROM sets on the SD card. Each title is colored by the result: found, in flash, missing or needs PSRAM. The screen then shows how many games can be played.
+- USB controllers are ready as soon as the game menu appears.
+- Fixed: on the Adafruit Fruit Jam and other boards with PIO-USB, USB controllers were often not found at start-up.
+
 ## v0.2
 
 - 41 more games, from GalaginoPlus: **Ms. Pac-Man**, **Pengo**, **Crush Roller**, **Eyes**, **Mr. TNT**, **Lizard Wizard**, **The Glob**, **Ali Baba and 40 Thieves**, **Van-Van Car**, **Donkey Kong Jr.**, **Donkey Kong 3**, **BurgerTime**, **Bump 'n' Jump**, **Vanguard**, **Fantasy**, **Nibbler**, **Galaxian**, **Moon Cresta**, **Scramble**, **Super Cobra**, **Turtles**, **Amidar**, **Anteater**, **Bagman**, **Lady Bug**, **Mr. Do!**, **Space Invaders**, **Phoenix**, **Bomb Jack**, **Pinball Action**, **Star Force**, **Time Pilot**, **Pooyan**, **Tutankham**, **Roc'n Rope**, **Circus Charlie**, **Mappy**, **The Tower of Druaga**, **Gaplus**, **Gyruss** and **Xevious**. The readme lists their ROM sets and folders.
