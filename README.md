@@ -295,7 +295,7 @@ All the games run on every board. The converted graphics of 1942 take about 230 
 | 14 | Adafruit Feather RP2350 with HSTX Port and TLV320DAC3100 I2S DAC | HSTX | `picoGalagino_AdafruitFeatherRP2350_TLV320DAC3100_arm_piousb.uf2` |
 | 15 | Olimex RP2040-PICO-PC with a Raspberry Pi Pico 2 | HSTX | `picoGalagino_OlimexPicoPC_arm.uf2` |
 
-The video back-end affects the upright picture (*Tate mode* off). Boards with HSTX output show every line of the game, scaled to the height of the screen. Boards with PicoDVI output fit the picture into the 240 lines of the screen by leaving out every sixth or every sixteenth line. See [Display and tate mode](#display-and-tate-mode).
+With *Tate mode* off, every line of the game is shown, scaled to the height of the screen. Boards with HSTX output mix two lines of the picture where a screen line falls between them; boards with PicoDVI output show each line of the picture on one or two screen lines. See [Display and tate mode](#display-and-tate-mode).
 
 For wiring and assembly instructions, see the setup sections of the [pico-infonesPlus README](https://github.com/PicoPlus-devel/pico-infonesPlus#setup). To flash a board, hold BOOTSEL while connecting it over USB, then copy the `.uf2` file onto the USB drive that appears.
 
@@ -338,7 +338,7 @@ All the games were made for a monitor mounted on its side. Pac-Man and the other
 
 | Tate mode | Picture | For |
 | --- | --- | --- |
-| Off (default) | Turned upright and shown in the centre of the screen. On boards with HSTX video output, all 288 or 256 lines are scaled to the height of the screen; a screen line that falls between two lines of the picture shows a mix of both. On boards with PicoDVI output, the lines are fitted into the 240 of the screen by leaving out every sixth or every sixteenth line. | A normal monitor or TV |
+| Off (default) | Turned upright and shown in the centre of the screen. All 288 or 256 lines are scaled to the height of the screen. On boards with HSTX video output, a screen line that falls between two lines of the picture shows a mix of both. On boards with PicoDVI output, each line of the picture is shown on one or two screen lines. | A normal monitor or TV |
 | Bottom left | The original picture, unrotated and pixel exact. | A monitor turned 90 degrees clockwise, so that its bottom edge is on the left |
 | Bottom right | The same picture, rotated by 180 degrees. | A monitor turned 90 degrees counter-clockwise, so that its bottom edge is on the right |
 
@@ -361,7 +361,7 @@ Both pictures appear upright once the monitor is turned as described in the tabl
 
 ## Settings menu
 
-**SELECT + START** opens the settings menu. Besides *Tate mode*, it offers the screen mode with or without scanlines, the FPS overlay, audio on/off, rapid fire on A and on B, the external audio output, the Fruit Jam volume and VU meter, the controller test, BOOTSEL mode and USB drive mode. In a game it also offers *Reset game*, and *Quit game*, which returns to the game menu. When started from pico-bootLoader, it also offers *Return to emulator selection*.
+**SELECT + START** opens the settings menu. Besides *Tate mode*, it offers the screen mode with or without scanlines (on boards with HSTX output; PicoDVI boards have no scanlines), the FPS overlay, audio on/off, rapid fire on A and on B, the external audio output, the Fruit Jam volume and VU meter, the controller test, BOOTSEL mode and USB drive mode. In a game it also offers *Reset game*, and *Quit game*, which returns to the game menu. When started from pico-bootLoader, it also offers *Return to emulator selection*.
 
 The settings are stored on the SD card in `/settings_ARC.dat`, a file shared by all arcade games of this family. The games have no save states.
 
