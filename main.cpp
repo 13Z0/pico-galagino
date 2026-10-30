@@ -291,6 +291,10 @@ static void screenText(int col, int row, const char *s, uint16_t fg, uint16_t bg
 #define SCR_FG rgb(200, 200, 200)
 #define SCR_HI rgb(255, 64, 64)
 #define SCR_FILE rgb(255, 255, 255)
+#define SCR_OK rgb(64, 255, 64)
+#define SCR_FLASH rgb(64, 224, 255)
+#define SCR_DIM rgb(96, 96, 96)
+#define SCR_NOROOM rgb(176, 32, 32)
 
 static void gameDir(int game, char *buf, size_t n)
 {
@@ -380,6 +384,42 @@ static void drawCopyScreen(int game)
     screenText(1, 12, "Its ROM set is copied there once:", SCR_FG, SCR_BG);
     screenText(1, 13, "the board restarts and copies it,", SCR_FG, SCR_BG);
     screenText(1, 14, "which takes a few seconds.", SCR_FG, SCR_BG);
+}
+
+// The loading screen: probeGames() shows each game as it looks for its set,
+// in two columns by title, coloured by what it found. Not after the restart
+// for a copy into flash, which starts the game at once.
+static constexpr int PROBE_ROWS = (GAL_GAME_COUNT + 1) / 2;
+static_assert(PROBE_ROWS <= 24, "the game list must fit between the header and the legend");
+static bool probeShown = false;
+
+static void drawProbeScreen()
+{
+    probeShown = true;
+    screenClear(SCR_BG);
+    screenText(-1, 1, sdOk ? "picoGalagino: looking for ROM sets" : "picoGalagino: no SD card", SCR_HI, SCR_BG);
+    // "found  in flash  missing  needs PSRAM", centred
+    screenText(1, 28, "found", SCR_OK, SCR_BG);
+    screenText(8, 28, "in flash", SCR_FLASH, SCR_BG);
+    screenText(18, 28, "missing", SCR_DIM, SCR_BG);
+    screenText(27, 28, "needs PSRAM", SCR_NOROOM, SCR_BG);
+}
+
+static void drawProbeResult(int game, uint16_t fg)
+{
+    if (probeShown)
+        screenText(game < PROBE_ROWS ? 1 : 21, 3 + game % PROBE_ROWS, gal_games[game].title, fg, SCR_BG);
+}
+
+// the header becomes the count
+static void drawProbeCount(int playable, int supported)
+{
+    if (!probeShown)
+        return;
+    char line[48];
+    snprintf(line, sizeof(line), "picoGalagino: %d of %d games", playable, supported);
+    screenText(0, 1, "                                        ", SCR_BG, SCR_BG);
+    screenText(-1, 1, line, SCR_HI, SCR_BG);
 }
 
 // ---------------------------------------------------------------------------
@@ -601,29 +641,45 @@ static gal_games_t probeGames()
 {
     gal_games_t mask = gal_flash_games();
     char dir[48];
+    int supported = 0, playable = 0;
     for (int g = 0; g < GAL_GAME_COUNT; g++)
     {
         if (!gal_supported((gal_game_id_t)g))
+        {
+            drawProbeResult(g, SCR_DIM);
             continue;
+        }
+        supported++;
         if (mask & GAL_GAME_BIT(g))
         {
             printf("%-16s in flash\n", gal_games[g].title);
+            drawProbeResult(g, SCR_FLASH);
+            playable++;
             continue;
         }
         if (!sdOk)
+        {
+            drawProbeResult(g, SCR_DIM);
             continue;
+        }
         if (!gal_available((gal_game_id_t)g))
         {
             printf("%-16s needs PSRAM or a larger flash\n", gal_games[g].title);
+            drawProbeResult(g, SCR_NOROOM);
             continue;
         }
         gameDir(g, dir, sizeof(dir));
         const uint32_t found = gal_probe((gal_game_id_t)g, &romIo, dir);
         const bool complete = gal_set_complete((gal_game_id_t)g, found);
         printf("%-16s %s\n", gal_games[g].title, complete ? "found" : "not found");
+        drawProbeResult(g, complete ? SCR_OK : SCR_DIM);
         if (complete)
+        {
             mask |= GAL_GAME_BIT(g);
+            playable++;
+        }
     }
+    drawProbeCount(playable, supported);
     return mask;
 }
 
@@ -1510,7 +1566,20 @@ int main()
     if (Frens::isPsramEnabled() && !GALAGINO_FLASH_CACHE_TEST)
         gal_set_psram(Frens::f_malloc(GAL_PSRAM_SIZE), GAL_PSRAM_SIZE);
     openFlashCache(); // without a card initAll() did not; the games in it still play
+    if (copiedGame < 0)
+    {
+        drawProbeScreen();
+        // The display takes a few seconds to lock on to the signal initAll()
+        // has just started, and the check would be over before it shows. Wait
+        // 180 frames, as pico-infonesPlus does before a game
+        // (menuPumpBlankFrames()), with the loading screen already up.
+        const uint32_t displayUp = displayFrameCounter() + 180;
+        while ((int32_t)(displayFrameCounter() - displayUp) < 0)
+            tuh_task();
+    }
     installed = probeGames();
+    if (probeShown)
+        sleep_ms(1500); // long enough to read the loading screen
     if (copiedGame >= 0)
     {
         // just copied into flash: started straight away, as it was chosen
