@@ -151,9 +151,9 @@ target_compile_definitions(${projectname} PRIVATE
 set_source_files_properties(${GALAGINO_CORE_SRC} PROPERTIES
     COMPILE_OPTIONS "-O2;-fno-tree-loop-distribute-patterns")
 
-# The upright picture (Tate off) on HSTX uses a canvas taller than 240 rows,
-# which the video driver scales to the screen: hstx_setFrameSize() in
-# pico_shared/drivers/pico_hdmi, only built when asked for.
+# The upright picture (Tate off) uses a canvas taller than 240 rows, which the
+# video driver scales to the screen: Frens::setFrameSize() in pico_shared, on
+# HSTX and PicoDVI, only built when asked for.
 target_compile_definitions(${projectname} PRIVATE HSTX_CUSTOM_FRAME_SIZE=1)
 
 # EXTRA_CMAKE_ARGS=-DGALAGINO_FRAME_STATS=1 ./bld.sh ... prints over the serial

@@ -21,9 +21,9 @@
  *
  * The games are vertical. The Tate mode setting chooses between the picture
  * upright for a normal monitor (default) and the unrotated raster for a monitor
- * turned on its side; see galagino/galagino.h. Upright, HSTX shows every row
- * of the picture, scaled to the screen height by the video driver; PicoDVI
- * leaves rows out to fit its 240 (see "Framebuffer access").
+ * turned on its side; see galagino/galagino.h. Upright, every row of the
+ * picture is shown, scaled to the screen height by the video driver: blended
+ * on HSTX, rows of one or two lines on PicoDVI (see "Framebuffer access").
  */
 
 #include <cstdio>
@@ -142,7 +142,7 @@ static uint64_t lastFrameUs = 0;
         [MOPT_RESET_GAME] = (inGame) ? 1 : -1,                                          \
         [MOPT_REBOOT_TO_LOADER] = BOOTLOADER_BUILD, /* the bootloader's picker */       \
         [MOPT_SAVE_RESTORE_STATE] = -1,             /* no save states */                \
-        [MOPT_SCREENMODE] = 1,                                                          \
+        [MOPT_SCREENMODE] = HSTX, /* PicoDVI has only one: no scanlines */              \
         [MOPT_SCANLINES] = 0, /* covered by the screen modes */                         \
         [MOPT_SCANLINE_TYPE] = HSTX,                                                    \
         [MOPT_FPS_OVERLAY] = 1,                                                         \
@@ -174,7 +174,6 @@ static uint64_t lastFrameUs = 0;
         [MOPT_MENU_OVERSCAN] = 0, /* shown regardless: listed below the menu colors */  \
         [MOPT_GENESIS_PAD] = 0,   /* Genesis */                                         \
         [MOPT_NES_PALETTE] = 0,   /* NES */                                             \
-        [MOPT_HSTX_CLOCK_FIX] = 0, /* only matters at 378 MHz and up */                 \
         [MOPT_BUTTON_LAYOUT] = 0, /* NES */                                             \
         [MOPT_TATE_MODE] = 1,     /* the games are vertical */                          \
     }
@@ -183,27 +182,27 @@ int8_t g_settings_visibility_galagino_game[MOPT_COUNT] = GALAGINO_VISIBILITY(1);
 int8_t g_settings_visibility_galagino_menu[MOPT_COUNT] = GALAGINO_VISIBILITY(0);
 
 // The 8:7 modes stretch NES pixels; these games have square-ish pixels, so only
-// the 1:1 modes are offered.
+// the 1:1 modes are offered. PicoDVI has no scanlines: they blank every second
+// line, and the upright picture needs all of them (see "Framebuffer access").
 const uint8_t g_available_screen_modes_galagino[] = {
-    0, // SCANLINE_8_7
-    0, // NOSCANLINE_8_7
-    1, // SCANLINE_1_1
-    1, // NOSCANLINE_1_1
+    0,    // SCANLINE_8_7
+    0,    // NOSCANLINE_8_7
+    HSTX, // SCANLINE_1_1
+    1,    // NOSCANLINE_1_1
 };
 
 // ---------------------------------------------------------------------------
 // Framebuffer access: the one place the two video back-ends differ.
 // Both are a contiguous 16-bit buffer, RGB555 on HSTX and RGB444 on PicoDVI,
-// of 320x240 pixels. Except on HSTX with Tate off: there the canvas is as tall
-// as the picture, TALL_W x gal_view_height() (288 or 256), and the driver
-// scales its rows to the 480 lines of the display (hstx_setFrameSize), so no
-// row is left out. The picture sits in the middle, between columns of 16
+// of 320x240 pixels. Except with Tate off: there the canvas is as tall as the
+// picture, TALL_W x gal_view_height() (288 or 256), and the driver scales its
+// rows to the 480 lines of the display (Frens::setFrameSize), so no row is
+// left out: HSTX blends the lines between two rows, PicoDVI shows each row on
+// one or two lines. The picture sits in the middle, between columns of 16
 // pixels that hold the FPS counter. It fits in the same memory.
 // ---------------------------------------------------------------------------
-#if HSTX
 #define TALL_W 256
 static_assert(TALL_W * 288 <= SCREENWIDTH * SCREENHEIGHT, "the tall canvas must fit the framebuffer");
-#endif
 static int fbWidth = SCREENWIDTH; // the canvas, and its stride
 static int fbHeight = SCREENHEIGHT;
 
@@ -211,31 +210,22 @@ static int fbHeight = SCREENHEIGHT;
 // changed, which leaves the screen black.
 static bool setTallCanvas(bool tall)
 {
-#if HSTX
     const int w = tall ? TALL_W : SCREENWIDTH;
     const int h = tall ? gal_view_height() : SCREENHEIGHT;
     if (w == fbWidth && h == fbHeight)
         return false;
     // read with the other stride, the old picture would show as noise
-    memset(hstx_getframebuffer(), 0, SCREENWIDTH * SCREENHEIGHT * sizeof(uint16_t));
-    if (!hstx_setFrameSize(w, h))
-        panic("hstx_setFrameSize(%d, %d) failed\n", w, h);
+    memset(Frens::getFrameBufferLine(0), 0, SCREENWIDTH * SCREENHEIGHT * sizeof(uint16_t));
+    if (!Frens::setFrameSize(w, h))
+        panic("Frens::setFrameSize(%d, %d) failed\n", w, h);
     fbWidth = w;
     fbHeight = h;
     return true;
-#else
-    (void)tall;
-    return false;
-#endif
 }
 
 static inline uint16_t *fbLine(int line)
 {
-#if HSTX
-    return hstx_getlineFromFramebuffer(line);
-#else
-    return &Frens::framebuffer[line * SCREENWIDTH];
-#endif
+    return Frens::getFrameBufferLine(line);
 }
 
 static inline uint16_t rgb(uint8_t r, uint8_t g, uint8_t b)
@@ -993,6 +983,16 @@ static void statsAdd(uint32_t emu, uint32_t draw)
             gal_prof[i] = 0;
         }
         printf("\n");
+#if !HSTX
+        // core1 on the tall canvas: its wait for a free TMDS buffer, which is
+        // its spare time, and the lines shown without one (red). Running totals.
+        static uint32_t lastWait = 0, lastMissed = 0;
+        const uint32_t wait = dvi_->getRowsWaitUs(), missed = dvi_->getMissedLines();
+        printf("  core1 on %dx%d: wait us %lu a frame, missed lines %lu\n", fbWidth, fbHeight,
+               (unsigned long)((wait - lastWait) / stats.frames), (unsigned long)(missed - lastMissed));
+        lastWait = wait;
+        lastMissed = missed;
+#endif
         memset(&stats, 0, sizeof(stats));
         stats.idle_min = UINT32_MAX;
     }
@@ -1009,9 +1009,9 @@ static void __noinline __not_in_flash_func(presentFrame)()
     gal_orient_t orient = (gal_orient_t)settings.flags.tateMode;
     const bool showFps = settings.flags.displayFrameRate;
 
-    // Tate off on HSTX: the tall canvas. Also follows the height of the picture
-    // from one game to the next.
-    if (setTallCanvas(HSTX && orient == GAL_ORIENT_UPRIGHT))
+    // Tate off: the tall canvas. Also follows the height of the picture from
+    // one game to the next.
+    if (setTallCanvas(orient == GAL_ORIENT_UPRIGHT))
         bordersValid = false;
     if (fbWidth != SCREENWIDTH)
         orient = GAL_ORIENT_UPRIGHT_FULL;
